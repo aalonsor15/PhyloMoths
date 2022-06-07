@@ -25,6 +25,7 @@ library(phytools)
 
 # practicing picante ------------------------------------------------
 
+
 # data(phylocom)
 # names(phylocom)
 # 
@@ -77,16 +78,12 @@ colnames(matrix)
 rownames(matrix)
 
 
-# calculating phylogenetic diversity metrics ------------------------------------
+# Calculating phylogenetic diversity metrics ------------------------------------
 
-# We first need to prune the phylogeny to include only the species that actually 
+# We can prune the phylogeny to include only the species that actually 
 # occurred in some community.
 prunedtree <- prune.sample(matrix, tree)
 prunedtree
-
-#### Faith's phylogenetic diversity (PD) - also calculates species richness (SP) ####
-pd.result <- pd(matrix, tree, include.root=TRUE)
-pd.result
 
 #### MPD and MNTD metrics ####
 
@@ -103,7 +100,8 @@ mpd <- mpd(matrix, phydist, abundance.weighted = FALSE)
 mpd #this is the observed MPD index
 
 ses.mpd.result <- ses.mpd(matrix, phydist, null.model = "taxa.labels",
-                          abundance.weighted = FALSE, runs = 99)
+    abundance.weighted = FALSE, runs = 99) # eventually, change to 
+                                          # runs = 999, iterations = 1000
 ses.mpd.result #this is the standardized effect size of the MPD index (SESmpd),  
 # which compares the observed MPD with a NULL (randomized) community
 
@@ -115,7 +113,8 @@ mntd <- mntd(matrix, phydist, abundance.weighted = FALSE)
 mntd #this is the observed MNTD index
 
 ses.mntd.result <- ses.mntd(matrix, phydist, null.model = "taxa.labels",
-                            abundance.weighted = FALSE, runs = 99)
+    abundance.weighted = FALSE, runs = 99)  # eventually, change to 
+                                            # runs = 999, iterations = 1000
 ses.mntd.result #this is the standardized effect size of the MNTD index (SESmntd),  
 # which compares the observed MNTD with a NULL (randomized) community
 
@@ -146,6 +145,17 @@ ses.mntd.result #this is the standardized effect size of the MNTD index (SESmntd
 # the abundance.weighted argument. This will change the interpretation of these
 # metrics from the mean phylogenetic distances among species, to the mean phylogenetic
 # distances among individuals.
+
+
+#### Faith's phylogenetic diversity (PD) - also calculates species richness (SP) ####
+
+pd.result <- pd(matrix, tree, include.root=TRUE)
+pd.result  #this is the observed PD index
+
+ses.pd.result <- ses.pd(matrix, tree, null.model = c("taxa.labels"),
+                        runs = 99, include.root=TRUE)
+ses.pd.result  #this is the standardized effect size of the PD index (SESpd),  
+# which compares the observed PD with a NULL (randomized) community
 
 
 # Phylogenetic beta diversity ---------------------------------------------
@@ -227,5 +237,6 @@ RaoQ
 # alpha Alpha diversity - average within-community diversity
 # beta Beta diversity - average among-community diversity
 # Fst Beta diversity / total diversity
+
 
 

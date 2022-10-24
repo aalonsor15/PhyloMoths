@@ -64,6 +64,9 @@ tree <- read.tree("tree_202210.newick")
 tree
 class(tree)
 
+##############################################################################
+#### analyses with full matrix ####
+##############################################################################
 
 # Loading my community data --------------------------------------------------
 
@@ -106,7 +109,7 @@ ses.mpd.result <- ses.mpd(matrix, phydist, null.model = "taxa.labels",
                                           # runs = 999, iterations = 1000
 ses.mpd.result #this is the standardized effect size of the MPD index (SESmpd),  
 # which compares the observed MPD with a NULL (randomized) community
-
+# THIS IS CALLED THE Net Relatedness Index (NRI)
 
 # Calculating MNTD index
 # MNTD = Mean Nearest Taxon Distance
@@ -119,6 +122,7 @@ ses.mntd.result <- ses.mntd(matrix, phydist, null.model = "taxa.labels",
                                             # runs = 999, iterations = 1000
 ses.mntd.result #this is the standardized effect size of the MNTD index (SESmntd),  
 # which compares the observed MNTD with a NULL (randomized) community
+# THIS IS CALLED THE Nearest Taxon Index (NTI)
 
 # The output includes the following columns:
 # • ntaxa Number of taxa in community
@@ -338,6 +342,11 @@ aov2.out <- group_by(phylo.indexes.night, Habitat, Period) %>%
 aov2.out
 
 
+##############################################################################
+#### analyses with summary matrix ####
+##############################################################################
+
+
 ### Using the summary matrix (by site and period, after removing January 2018
 # data to avoid having 6 months in the post period vs 5 months in the pre) ###
 
@@ -378,10 +387,10 @@ phydist <- cophenetic(tree)
 mpd.sum <- mpd(sum.matrix, phydist, abundance.weighted = FALSE) 
 mpd.sum #this is the observed MPD index
 
-# ses.mpd.result <- ses.mpd(matrix, phydist, null.model = "taxa.labels",
-#                           abundance.weighted = FALSE, runs = 99) # eventually, change to 
-# # runs = 999, iterations = 1000
-# ses.mpd.result #this is the standardized effect size of the MPD index (SESmpd),  
+ses.mpd.sum <- ses.mpd(sum.matrix, phydist, null.model = "taxa.labels",
+                          abundance.weighted = FALSE, runs = 99) # eventually, change to
+# runs = 999, iterations = 1000
+ses.mpd.sum #this is the standardized effect size of the MPD index (SESmpd),
 # # which compares the observed MPD with a NULL (randomized) community
 
 
@@ -391,10 +400,10 @@ mpd.sum #this is the observed MPD index
 mntd.sum <- mntd(sum.matrix, phydist, abundance.weighted = FALSE)
 mntd.sum #this is the observed MNTD index
 
-# ses.mntd.result <- ses.mntd(matrix, phydist, null.model = "taxa.labels",
-#                             abundance.weighted = FALSE, runs = 99)  # eventually, change to 
-# # runs = 999, iterations = 1000
-# ses.mntd.result #this is the standardized effect size of the MNTD index (SESmntd),  
+ses.mntd.sum <- ses.mntd(sum.matrix, phydist, null.model = "taxa.labels",
+                            abundance.weighted = FALSE, runs = 99)  # eventually, change to
+# runs = 999, iterations = 1000
+ses.mntd.sum #this is the standardized effect size of the MNTD index (SESmntd),
 # # which compares the observed MNTD with a NULL (randomized) community
 
 
@@ -409,13 +418,18 @@ pd.sum  #this is the observed PD index
 # # which compares the observed PD with a NULL (randomized) community
 
 
+
 ### Using the summary matrix (by site*period) ###
 
 # Extract indexes
 
 mpd.values.sum <- as.data.frame(mpd.sum)
+nri.values.sum <- as.data.frame(select(ses.mpd.sum, mpd.obs.z))
+nri.values.sum <- nri.values.sum*-1
 
 mntd.values.sum <- as.data.frame(mntd.sum)
+nti.values.sum <- as.data.frame(select(ses.mntd.sum, mntd.obs.z))
+nti.values.sum <- nti.values.sum*-1
 
 pd.values.sum <- as.data.frame(pd.sum)
 
@@ -424,48 +438,76 @@ period <- select(sum.data,Period)
 
 
 #create table with output of all diversity indexes
-phylo.indexes.sum <- cbind(habitat, period, mpd.values.sum, mntd.values.sum, pd.values.sum)
+phylo.indexes.sum <- cbind(habitat, period, mpd.values.sum, nri.values.sum, 
+                           mntd.values.sum, nti.values.sum, pd.values.sum)
 
 
 #boxplots
 
 mpd.plot.sum <- ggboxplot(phylo.indexes.sum, x = "Period", y = "mpd.sum", width = 0.7,
-                      palette = c("#00AFBB","#FC4E07"),size =0.3, fill= "Habitat", 
+                      palette = c("#af8dc3","#7fbf7b"),size =0.3, fill= "Habitat", 
                       order = c("Pre-Hurricane", "Post-Hurricane"),legend = "top",
-                      font.x = c(8, "black"),font.y = c(8, "black"),
-                      font.ytickslab= c(8, "black"), font.xtickslab= c(8, "black")) + 
-                      xlab(NULL) + ylab("Mean Pairwise Distance") + 
-                      theme(legend.text = element_text(size=8), 
-                          legend.title = element_text(size=10)) #+
-                      #ylim(0,0.5)
+                      font.x = c(13, "black"),font.y = c(14, "black"),
+                      font.ytickslab= c(13, "black"), font.xtickslab= c(13, "black")) + 
+                      xlab(NULL) + ylab("Mean Pairwise\nDistance") + 
+                      theme(legend.text = element_text(size=13), 
+                          legend.title = element_text(size=14)) +
+                      scale_y_continuous(
+                          labels = scales::number_format(accuracy = 0.01), 
+                          breaks=seq(0.39,0.43,by=0.01))
 mpd.plot.sum
 
-mntd.plot.sum <- ggboxplot(phylo.indexes.sum, x = "Period", y = "mntd.sum", width = 0.7,
-                       palette = c("#00AFBB","#FC4E07"),size =0.3, fill= "Habitat", 
-                       order = c("Pre-Hurricane", "Post-Hurricane"),legend = "top",
-                       font.x = c(8, "black"),font.y = c(8, "black"),
-                       font.ytickslab= c(8, "black"), font.xtickslab= c(8, "black")) + 
-                        xlab(NULL) + ylab("Mean Nearest Taxon Distance") + 
-                        theme(legend.text = element_text(size=8), 
-                            legend.title = element_text(size=10)) +
+nri.plot.sum <- ggboxplot(phylo.indexes.sum, x = "Period", y = "mpd.obs.z", width = 0.7,
+                         palette = c("#af8dc3","#7fbf7b"),size =0.3, fill= "Habitat",
+                         order = c("Pre-Hurricane", "Post-Hurricane"),legend = "top",
+                         font.x = c(14, "black"),font.y = c(14, "black"),
+                         font.ytickslab= c(13, "black"), font.xtickslab= c(13, "black")) +
+                        xlab(NULL) + ylab("Net Relatedness\nIndex") +
+                        theme(legend.text = element_text(size=13),
+                            legend.title = element_text(size=14)) +
                         scale_y_continuous(
+                            labels = scales::number_format(accuracy = 0.1))
+nri.plot.sum
+
+
+mntd.plot.sum <- ggboxplot(phylo.indexes.sum, x = "Period", y = "mntd.sum", width = 0.7,
+                       palette = c("#af8dc3","#7fbf7b"),size =0.3, fill= "Habitat", 
+                       order = c("Pre-Hurricane", "Post-Hurricane"),legend = "top",
+                       font.x = c(13, "black"),font.y = c(14, "black"),
+                       font.ytickslab= c(13, "black"), font.xtickslab= c(13, "black")) + 
+                      xlab(NULL) + ylab("Mean Nearest\nTaxon Distance") + 
+                      theme(legend.text = element_text(size=13), 
+                            legend.title = element_text(size=14)) +
+                      scale_y_continuous(
                             labels = scales::number_format(accuracy = 0.01))
 mntd.plot.sum
 
+nti.plot.sum <- ggboxplot(phylo.indexes.sum, x = "Period", y = "mntd.obs.z", width = 0.7,
+                          palette = c("#af8dc3","#7fbf7b"),size =0.3, fill= "Habitat",
+                          order = c("Pre-Hurricane", "Post-Hurricane"),legend = "top",
+                          font.x = c(14, "black"),font.y = c(14, "black"),
+                          font.ytickslab= c(13, "black"), font.xtickslab= c(13, "black")) +
+                          xlab(NULL) + ylab("Nearest Taxon\nIndex") +
+                          theme(legend.text = element_text(size=13),
+                              legend.title = element_text(size=14)) +
+                          scale_y_continuous(
+                              labels = scales::number_format(accuracy = 0.1))
+nti.plot.sum
+
 pd.plot.sum <- ggboxplot(phylo.indexes.sum, x = "Period", y = "PD", width = 0.7,
-                     palette = c("#00AFBB","#FC4E07"),size =0.3, fill= "Habitat", 
+                     palette = c("#af8dc3","#7fbf7b"),size =0.3, fill= "Habitat", 
                      order = c("Pre-Hurricane", "Post-Hurricane"),legend = "top",
-                     font.x = c(8, "black"),font.y = c(8, "black"),
-                     font.ytickslab= c(8, "black"), font.xtickslab= c(8, "black")) + 
-                  xlab("Period") + ylab("Faith's Phylogenetic Diversity") + 
-                  theme(legend.text = element_text(size=8), 
-                          legend.title = element_text(size=10)) +
+                     font.x = c(14, "black"),font.y = c(14, "black"),
+                     font.ytickslab= c(13, "black"), font.xtickslab= c(13, "black")) + 
+                  xlab("Period") + ylab("Faith's Phylogenetic\nDiversity") + 
+                  theme(legend.text = element_text(size=13), 
+                          legend.title = element_text(size=14)) +
                   scale_y_continuous(
-                          labels = scales::number_format(accuracy = 0.01))
+                          labels = scales::number_format(accuracy = 0.1), limits=c(8,13)) 
 pd.plot.sum
 
 
-all.plots.sum <- ggarrange(mpd.plot.sum + rremove("x.text") , mntd.plot.sum + rremove("x.text"), 
+all.plots.sum <- ggarrange(nri.plot.sum + rremove("x.text") , nti.plot.sum + rremove("x.text"), 
                        pd.plot.sum, align = "hv",
                        #labels = c("A", "B", "C"),font.label = list(size = 8, color = "black"),
                        ncol = 1, nrow = 3,
@@ -474,23 +516,33 @@ all.plots.sum
 
 # Two Way Anova with summed data 
 
+shapiro.test(mpd.sum)
 aov2.mpd.sum <- aov(mpd.sum ~ Habitat * Period, data = phylo.indexes.sum)
 summary(aov2.mpd.sum)
 TukeyHSD(aov2.mpd.sum)
+# summary(aov2.mpd) #to compare with results of the full matrix
 
-summary(aov2.mpd) #to compare with results of the full matrix
+shapiro.test(phylo.indexes.sum$mpd.obs.z)
+aov2.nri.sum <- aov(mpd.obs.z ~ Habitat * Period, data = phylo.indexes.sum)
+summary(aov2.nri.sum)
+TukeyHSD(aov2.nri.sum)
 
+shapiro.test(mntd.sum)
 aov2.mntd.sum <- aov(mntd.sum ~ Habitat * Period, data = phylo.indexes.sum)
 summary(aov2.mntd.sum)
 TukeyHSD(aov2.mntd.sum)
+# summary(aov2.mntd) #to compare with results of the full matrix
 
-summary(aov2.mntd) #to compare with results of the full matrix
+shapiro.test(phylo.indexes.sum$mntd.obs.z)
+aov2.nti.sum <- aov(mntd.obs.z ~ Habitat * Period, data = phylo.indexes.sum)
+summary(aov2.nti.sum)
+TukeyHSD(aov2.nti.sum)
 
+shapiro.test(pd.sum$PD)
 aov2.pd.sum <- aov(PD ~ Habitat * Period, data = phylo.indexes.sum)
 summary(aov2.pd.sum)
 TukeyHSD(aov2.pd.sum)
-
-summary(aov2.pd) #to compare with results of the full matrix
+# summary(aov2.pd) #to compare with results of the full matrix
 
 aov2.out.sum <- group_by(phylo.indexes.sum, Habitat, Period) %>%
   summarise(
@@ -504,5 +556,25 @@ aov2.out.sum <- group_by(phylo.indexes.sum, Habitat, Period) %>%
   )
 
 aov2.out.sum
+
+# beta diversity (using summary matrix)
+
+# comdist = Calculates MPD (mean pairwise distance) separating taxa in two 
+# communities, a measure of phylogenetic beta diversity
+comdist.mpd.sum <- comdist(sum.matrix, phydist, abundance.weighted = FALSE)
+comdist.mpd.sum
+
+library(cluster)
+comdist.mpd.sum <- hclust(comdist.mpd.sum)
+plot(comdist.mpd.sum)
+
+# comdistnt = Calculates MNTD (mean nearest taxon distance) separating taxa in 
+# two communities, a measure of phylogenetic beta diversity
+comdistnt.mntd.sum <- comdistnt(sum.matrix, phydist, abundance.weighted = FALSE)
+comdistnt.mntd.sum
+
+comdistnt.mntd.sum <- hclust(comdistnt.mntd.sum)
+plot(comdistnt.mntd.sum)
+
 
 
